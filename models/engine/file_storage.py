@@ -1,62 +1,69 @@
-"""
-File Storage module for the AirBnB Clone project.
-Handles the serialization and deserialization of instances to and from a JSON file.
-"""#!/usr/bin/python3
+#!/usr/bin/python3
+"""A module that defines a class to manage file storage for hbnb clone"""
 import json
-from os.path import exists
+import os
+from importlib import import_module
 
 
 class FileStorage:
-     """Class for FileStorage that manages storage of AirBnB clone instances."""
+    """This class manages storage of hbnb models in JSON format"""
+    __file_path = 'file.json'
+    __objects = {}
 
-    __file_path = "file.json"
-    __objects = dict()
+    def __init__(self):
+        """Initializes a FileStorage instance"""
+        self.model_classes = {
+            'BaseModel': import_module('models.base_model').BaseModel,
+            'User': import_module('models.user').User,
+            'State': import_module('models.state').State,
+            'City': import_module('models.city').City,
+            'Amenity': import_module('models.amenity').Amenity,
+            'Place': import_module('models.place').Place,
+            'Review': import_module('models.review').Review
+        }
 
-    def all(self):
-         """Returns the dictionary __objects, containing all stored objects."""
-        return self.__objects
+    def all(self, cls=None):
+        """Returns a dictionary of models currently in storage"""
+        if cls is None:
+            return self.__objects
+        else:
+            filtered_dict = {}
+            for key, value in self.__objects.items():
+                if type(value) is cls:
+                    filtered_dict[key] = value
+            return filtered_dict
+
+    def delete(self, obj=None):
+        """Removes an object from the storage dictionary"""
+        if obj is not None:
+            obj_key = obj.to_dict()['__class__'] + '.' + obj.id
+            if obj_key in self.__objects.keys():
+                del self.__objects[obj_key]
 
     def new(self, obj):
-        """
-        Adds a new object to __objects with key <obj class name>.id.               
-        Args:
-        obj: The object to be added to the storage.
-        """
-        self.__objects[obj.__class__.__name__ + '.' + obj.id] = obj
+        """Adds new object to storage dictionary"""
+        self.__objects.update(
+            {obj.to_dict()['__class__'] + '.' + obj.id: obj}
+        )
 
     def save(self):
-        """Serializes __objects to the JSON file specified by __file_path."""
-        temp = dict()
-        for keys in self.__objects.keys():
-            temp[keys] = self.__objects[keys].to_dict()
-        with open(self.__file_path, mode='w') as jsonfile:
-            json.dump(temp, jsonfile)
+        """Saves storage dictionary to file"""
+        with open(self.__file_path, 'w') as file:
+            temp = {}
+            for key, val in self.__objects.items():
+                temp[key] = val.to_dict()
+            json.dump(temp, file)
 
     def reload(self):
-        """Deserializes the JSON file to __objects, if the file exists."""
-        from ..base_model import BaseModel
-        from ..user import User
-        from ..state import State
-        from ..city import City
-        from ..amenity import Amenity
-        from ..place import Place
-        from ..review import Review
+        """Loads storage dictionary from file"""
+        classes = self.model_classes
+        if os.path.isfile(self.__file_path):
+            temp = {}
+            with open(self.__file_path, 'r') as file:
+                temp = json.load(file)
+                for key, val in temp.items():
+                    self.all()[key] = classes[val['__class__']](**val)
 
-        if exists(self.__file_path):
-            with open(self.__file_path) as jsonfile:
-                decereal = json.load(jsonfile)
-            for keys in decereal.keys():
-                if decereal[keys]['__class__'] == "BaseModel":
-                    self.__objects[keys] = BaseModel(**decereal[keys])
-                elif decereal[keys]['__class__'] == "User":
-                    self.__objects[keys] = User(**decereal[keys])
-                elif decereal[keys]['__class__'] == "State":
-                    self.__objects[keys] = State(**decereal[keys])
-                elif decereal[keys]['__class__'] == "City":
-                    self.__objects[keys] = City(**decereal[keys])
-                elif decereal[keys]['__class__'] == "Amenity":
-                    self.__objects[keys] = Amenity(**decereal[keys])
-                elif decereal[keys]['__class__'] == "Place":
-                    self.__objects[keys] = Place(**decereal[keys])
-                elif decereal[keys]['__class__'] == "Review":
-                    self.__objects[keys] = Review(**decereal[keys])
+    def close(self):
+        """Closes the storage engine."""
+        self.reload()

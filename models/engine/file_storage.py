@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""A module that defines a class to manage file storage for hbnb clone"""
+"""This module defines a class to manage file storage for hbnb clone"""
 import json
 import os
 from importlib import import_module
@@ -36,9 +36,16 @@ class FileStorage:
     def delete(self, obj=None):
         """Removes an object from the storage dictionary"""
         if obj is not None:
-            obj_key = obj.to_dict()['__class__'] + '.' + obj.id
-            if obj_key in self.__objects.keys():
-                del self.__objects[obj_key]
+            return
+        obj_key = obj.to_dict()['__class__'] + '.' + obj.id
+        try:
+            del self.__objects[obj_key]
+            #if obj_key in self.__objects.keys():
+                #del self.__objects[obj_key]
+        except AttributeError:
+            pass
+        except KeyboardInterrupt:
+            pass
 
     def new(self, obj):
         """Adds new object to storage dictionary"""
@@ -57,12 +64,17 @@ class FileStorage:
     def reload(self):
         """Loads storage dictionary from file"""
         classes = self.model_classes
-        if os.path.isfile(self.__file_path):
-            temp = {}
-            with open(self.__file_path, 'r') as file:
-                temp = json.load(file)
-                for key, val in temp.items():
-                    self.all()[key] = classes[val['__class__']](**val)
+        try:
+            if os.path.isfile(self.__file_path):
+                temp = {}
+                with open(self.__file_path, 'r') as file:
+                    temp = json.load(file)
+                    for key, val in temp.items():
+                        self.all()[key] = classes[val['__class__']](**val)
+        except FileNotFoundError:
+            pass
+        except json.decoder.JSONDecodeError:
+            pass
 
     def close(self):
         """Closes the storage engine."""

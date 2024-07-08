@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-"""A module that defines a class to manage Database storage for hbnb clone"""
+"""This module defines a class to manage database storage for hbnb clone"""
 import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -15,7 +15,7 @@ from models.review import Review
 
 
 class DBStorage:
-    """A class that manages storage of hbnb models in a SQL database"""
+    """This class manages storage of hbnb models in a SQL database"""
     __engine = None
     __session = None
 

@@ -17,8 +17,21 @@ class BaseModel:
     updated_at = Column(DATETIME, nullable=False, default=datetime.utcnow())
 
     def __init__(self, *args, **kwargs):
+        """instantaiates a new model another way"""
+        from models import storage
+        self.id = str(uuid.uuid4())
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+
+        if kwargs: 
+            for key, value in kwargs.items():
+                if key in ('created_at', 'updated_at'):
+                    setattr(self, key, datetime.fromisoformat(value))
+                    if key != '__class__' and hasattr(self.__class__, key):
+                        setattr(self, key, value)
+
         """Instantiates a new model"""
-        if not kwargs:
+        '''if not kwargs:
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
@@ -36,7 +49,7 @@ class BaseModel:
                 setattr(self, 'created_at', datetime.now())
             if not hasattr(kwargs, 'updated_at'):
                 setattr(self, 'updated_at', datetime.now())
-
+'''
     def __str__(self):
         """Returns a string representation of the instance"""
         cls = (str(type(self)).split('.')[-1]).split('\'')[0]
@@ -56,6 +69,15 @@ class BaseModel:
 
     def to_dict(self):
         """Convert instance into dict format"""
+        dictionary = {}
+        dictionary.update(self.__dict__)
+        dictionary.update({'__class__':
+                          (str(type(self)).split('.')[-1]).split('\'')[0]})
+        dictionary['created_at'] = self.created_at.isoformat()
+        dictionary['updated_at'] = self.updated_at.isoformat()
+        dictionary.pop('_sa_instance_state')
+        return dictionary
+        '''
         res = {}
         for key, value in self.__dict__.items():
             if key != '_sa_instance_state':
@@ -64,4 +86,4 @@ class BaseModel:
                 else:
                     res[key] = value
         res['__class__'] = self.__class__.__name__
-        return res
+        return res'''

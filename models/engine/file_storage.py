@@ -40,8 +40,6 @@ class FileStorage:
         obj_key = obj.to_dict()['__class__'] + '.' + obj.id
         try:
             del self.__objects[obj_key]
-            #if obj_key in self.__objects.keys():
-                #del self.__objects[obj_key]
         except AttributeError:
             pass
         except KeyboardInterrupt:
